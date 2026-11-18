@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder until Etesian-design has a Glance icon: a page of news under a magnifier, on Etesian's ground. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#F6F8ED" android:pathData="M36,34h30a4,4 0,0 1,4 4v20h-6v-18h-26v32h14v6h-16a4,4 0,0 1,-4 -4v-36a4,4 0,0 1,4 -4z" />
+    <path android:fillColor="#F6F8ED" android:pathData="M42,46h18v3h-18zM42,53h14v3h-14zM42,60h10v3h-10z" />
+    <path android:fillColor="#F6F8ED" android:pathData="M64,58a10,10 0,1 1,-0.01 0zM64,62a6,6 0,1 0,0.01 0zM70.5,73.5l3,-3 7,7 -3,3z" />
+</vector>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Etesian's light pages (Etesian-design): pale grey ground, white surfaces, N9 blue. -->
+<resources>
+    <color name="background">#F2F2F2</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_secondary">#6E6E6E</color>
+    <color name="accent">#0088CC</color>
+    <color name="divider">#DADADA</color>
+</resources>

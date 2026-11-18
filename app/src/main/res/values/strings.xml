@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Glance</string>
+    <string name="search_hint">Search your phone and the web</string>
+    <string name="settings">Settings</string>
+    <string name="clear">Clear</string>
+    <string name="search">Search</string>
+    <string name="news">News</string>
+    <string name="fewer_like_this">Fewer like this</string>
+    <string name="share">Share</string>
+    <string name="loading_news">Getting the news…</string>
+    <string name="no_news">No news yet. Pull down to try again.</string>
+    <string name="updated">Updated %1$s ago</string>
+    <string name="topic_nation">Your country</string>
+    <plurals name="outlets">
+        <item quantity="one">%d outlet</item>
+        <item quantity="other">%d outlets</item>
+    </plurals>
+    <string name="setup_title">Search more of your phone</string>
+    <string name="setup_text">Glance can also find your contacts, messages, notifications and files. Nothing leaves the phone.</string>
+    <string name="need_contacts">Contacts</string>
+    <string name="need_sms">Text messages</string>
+    <string name="need_notifications">Notifications and chat messages</string>
+    <string name="need_files">Files</string>
+    <string name="not_allowed">Not allowed yet: switch on to allow</string>
+    <string name="source_settings">Settings pages</string>
+    <string name="source_news">News and feeds</string>
+    <string name="source_shortcuts">App shortcuts</string>
+    <string name="shortcuts_on">On: chats, contacts and actions inside apps</string>
+    <string name="shortcuts_off">Only on Etesian (needs the system\'s permission)</string>
+    <string name="web_suggestions">Web suggestions</string>
+    <string name="web_suggestions_summary">Suggestions from DuckDuckGo as you type (what you type is sent to it)</string>
+    <string name="search_engine">Search engine</string>
+    <string name="clear_notification_history">Clear notification history</string>
+    <string name="clear_notification_history_summary">Glance keeps notifications for %1$d days so search can find them</string>
+    <string name="google_news">Google News</string>
+    <string name="google_news_summary">Top stories and topics, read from Google News\' feeds: no app, no ads</string>
+    <string name="topics">Topics</string>
+    <string name="edition">Edition</string>
+    <string name="feeds">Your feeds</string>
+    <string name="feeds_summary">Posts from the Feeds app\'s subscriptions, mixed in</string>
+    <string name="feeds_missing">Needs Etesian Feeds</string>
+    <string name="reset_interests">Forget what I read</string>
+    <string name="reset_interests_summary">Glance learns which topics and outlets you open, on the phone only</string>
+    <string-array name="topic_labels">
+        <item>World</item>
+        <item>Your country</item>
+        <item>Business</item>
+        <item>Technology</item>
+        <item>Science</item>
+        <item>Health</item>
+        <item>Sports</item>
+        <item>Entertainment</item>
+    </string-array>
+    <string-array name="edition_labels">
+        <item>The phone\'s language and country</item>
+        <item>United Kingdom</item>
+        <item>United States</item>
+        <item>Ελλάδα</item>
+        <item>Deutschland</item>
+        <item>France</item>
+        <item>España</item>
+        <item>Italia</item>
+    </string-array>
+    <string-array name="edition_values">
+        <item></item>
+        <item>hl=en-GB&amp;gl=GB&amp;ceid=GB:en</item>
+        <item>hl=en-US&amp;gl=US&amp;ceid=US:en</item>
+        <item>hl=el&amp;gl=GR&amp;ceid=GR:el</item>
+        <item>hl=de&amp;gl=DE&amp;ceid=DE:de</item>
+        <item>hl=fr&amp;gl=FR&amp;ceid=FR:fr</item>
+        <item>hl=es&amp;gl=ES&amp;ceid=ES:es</item>
+        <item>hl=it&amp;gl=IT&amp;ceid=IT:it</item>
+    </string-array>
+</resources>
