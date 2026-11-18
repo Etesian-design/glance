@@ -1,0 +1,8 @@
+Etesian Glance
+Etesian, founded by Kyriakos Bompotis.
+
+Licensed under the GNU Affero General Public License, version 3 only (AGPL-3.0-only, LICENSE), with the additional
+terms in ADDITIONAL-TERMS.md (section 7(b) attribution, section 7(e) names and logos, the Phorepoc exception).
+
+Third-party code under its own licence: Readability.js (app/src/main/assets/readability/, Copyright (c) 2010 Arc90 Inc, Apache-2.0);
+the Gradle wrapper (gradlew, gradlew.bat, Apache-2.0).
