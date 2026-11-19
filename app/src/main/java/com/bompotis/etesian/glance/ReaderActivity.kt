@@ -279,6 +279,11 @@ object Reader {
     var meta = function(n) { var e = document.querySelector('meta[property="' + n + '"],meta[name="' + n + '"]'); return e ? e.content : ''; };
     // Text only screen readers get (BBC's "published at" before every time): drawn 1px or less, or the usual
     // classes. Marked in the live page, where sizes are known, and dropped from the copy Readability reads.
+    var linky = function(e) {
+      var t = e.textContent.replace(/\s+/g, ''), l = 0, as = e.getElementsByTagName('a');
+      for (var k = 0; k < as.length; k++) l += as[k].textContent.replace(/\s+/g, '').length;
+      return t.length > 0 && l / t.length > 0.5;
+    };
     var all = document.body ? document.body.getElementsByTagName('*') : [];
     for (var i = 0; i < all.length; i++) {
       var el = all[i];
@@ -286,6 +291,12 @@ object Reader {
       var cls = typeof el.className === 'string' ? el.className : '';
       if (/visually-?hidden|sr-only|screen-?reader|offscreen/i.test(cls) ||
           (el.getClientRects().length && el.offsetWidth <= 1 && el.offsetHeight <= 1)) el.setAttribute('data-etesian-sr', '1');
+      // Menus the page's styles hide on a phone (CNN's whole site menu in its header): Readability reads an unstyled copy
+      // and takes them for text. Only hidden navigation goes, inside a header, nav, footer or menu, or mostly links; a
+      // hidden part of the article itself (a collapsed "read more") stays.
+      else if (!el.getClientRects().length && getComputedStyle(el).display === 'none' &&
+          (el.closest('header,nav,footer,aside,[role=navigation],[role=menu],[role=banner],[role=contentinfo]') || linky(el)))
+        el.setAttribute('data-etesian-sr', '1');
     }
     var copy = document.cloneNode(true);
     var sr = copy.querySelectorAll('[data-etesian-sr]');
