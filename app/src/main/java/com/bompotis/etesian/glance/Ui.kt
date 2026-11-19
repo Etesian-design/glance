@@ -40,7 +40,7 @@ object Ui {
     }
 
     /** A bottom bar action. */
-    class Action(val id: String, val icon: Int, val label: String)
+    class Action(val id: String, val icon: Int, val label: String, val enabled: Boolean = true)
 
     /**
      * The page's actions on the Etesian (N9) bottom bar, Back at its far left, as every Etesian app does (no buttons
@@ -50,7 +50,7 @@ object Ui {
                 onTap: (String) -> Unit): android.view.View? {
         if (com.bompotis.etesian.toolbar.EtesianToolbar.isAvailable(activity)) {
             com.bompotis.etesian.toolbar.EtesianToolbar.of(activity).setBack(back)
-                .setItems(actions.map { com.bompotis.etesian.toolbar.EtesianToolbar.Item.action(it.id, it.icon, it.label) }) { onTap(it) }
+                .setItems(actions.map { com.bompotis.etesian.toolbar.EtesianToolbar.Item.action(it.id, it.icon, it.label).setEnabled(it.enabled) }) { onTap(it) }
             return null
         }
         if (root == null) return null
@@ -62,6 +62,7 @@ object Ui {
             imageTintList = android.content.res.ColorStateList.valueOf(color(activity, PRIMARY))
             scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
             contentDescription = a.label
+            isEnabled = a.enabled; alpha = if (a.enabled) 1f else 0.4f
             setPadding(0, (14 * d).toInt(), 0, (14 * d).toInt())
             setOnClickListener { if (a.id == "back") @Suppress("DEPRECATION") activity.onBackPressed() else onTap(a.id) }
         }, android.widget.LinearLayout.LayoutParams(0, -2, 1f))

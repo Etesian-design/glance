@@ -177,7 +177,14 @@ class Rows(
             Kind.NEWS, Kind.FEED -> R.drawable.ic_news
             else -> 0
         }
-        if (res != 0) return activity.getDrawable(res)!!.mutate().apply { setTint(Ui.color(activity, Ui.SECONDARY)) }
+        if (res != 0) {
+            val glyph = activity.getDrawable(res)!!.mutate()
+            // A search engine's suggestions stay small bare glyphs under the "Search the web" row; every other result
+            // sits on a lit squircle, as on the N9 (rule 30: squircles for icons).
+            if (r.kind == Kind.WEB && r.key.startsWith("suggest:"))
+                return android.graphics.drawable.InsetDrawable(glyph.apply { setTint(Ui.color(activity, Ui.SECONDARY)) }, px(10))
+            return GlyphTile(glyph.apply { setTint(android.graphics.Color.WHITE) }, 0xFF3A3A3A.toInt())
+        }
         return Letter(activity, r.title, Ui.color(activity, Ui.ACCENT))
     }
 
@@ -211,7 +218,37 @@ class Rows(
     }
 }
 
-/** A round tile with a name's first letter (contacts without a photo, messages). */
+/** A superellipse (n = 2.8), the N9's squircle, filling [b]. */
+fun squircle(b: android.graphics.RectF): android.graphics.Path {
+    val p = android.graphics.Path(); val n = 2.8
+    for (i in 0..120) {
+        val t = Math.toRadians(i * 3.0); val c = Math.cos(t); val sn = Math.sin(t)
+        val x = (b.centerX() + b.width() / 2 * Math.signum(c) * Math.pow(Math.abs(c), 2 / n)).toFloat()
+        val y = (b.centerY() + b.height() / 2 * Math.signum(sn) * Math.pow(Math.abs(sn), 2 / n)).toFloat()
+        if (i == 0) p.moveTo(x, y) else p.lineTo(x, y)
+    }
+    p.close(); return p
+}
+
+/** A lit squircle (lighter at the top) of [color] with a white glyph inset in it. */
+class GlyphTile(private val glyph: Drawable, private val color: Int) : Drawable() {
+    private val bg = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+    override fun draw(c: android.graphics.Canvas) {
+        val b = android.graphics.RectF(bounds)
+        bg.shader = android.graphics.LinearGradient(0f, b.top, 0f, b.bottom,
+            androidx.core.graphics.ColorUtils.blendARGB(color, android.graphics.Color.WHITE, 0.25f), color,
+            android.graphics.Shader.TileMode.CLAMP)
+        c.drawPath(squircle(b), bg)
+        val i = (bounds.width() * 0.22f).toInt()
+        glyph.setBounds(bounds.left + i, bounds.top + i, bounds.right - i, bounds.bottom - i); glyph.draw(c)
+    }
+    override fun setAlpha(alpha: Int) { bg.alpha = alpha; glyph.alpha = alpha }
+    override fun setColorFilter(cf: android.graphics.ColorFilter?) { bg.colorFilter = cf }
+    @Deprecated("Deprecated in Java")
+    override fun getOpacity() = android.graphics.PixelFormat.TRANSLUCENT
+}
+
+/** A squircle tile with a name's first letter (contacts without a photo, messages). */
 class Letter(ctx: android.content.Context, name: String, private val color: Int) : Drawable() {
     private val letter = name.trim().firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "?"
     private val bg = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { this.color = this@Letter.color }
@@ -223,7 +260,7 @@ class Letter(ctx: android.content.Context, name: String, private val color: Int)
     override fun draw(c: android.graphics.Canvas) {
         val b = bounds
         val r = minOf(b.width(), b.height()) / 2f
-        c.drawCircle(b.exactCenterX(), b.exactCenterY(), r, bg)
+        c.drawPath(squircle(android.graphics.RectF(b)), bg)
         fg.textSize = r
         c.drawText(letter, b.exactCenterX(), b.exactCenterY() - (fg.descent() + fg.ascent()) / 2, fg)
     }

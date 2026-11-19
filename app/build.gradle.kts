@@ -53,7 +53,6 @@ dependencies {
     implementation(libs.androidx.recyclerview)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.preference)
-    implementation(libs.androidx.swiperefresh)
     testImplementation(libs.junit)
     testImplementation(libs.kxml2)
     testImplementation(libs.json)
