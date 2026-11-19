@@ -235,12 +235,12 @@ object NewsSource : Source {
         val news = NewsStore.cached(ctx).mapNotNull { a ->
             val s = headline(query, a.title)
             if (s == Match.NONE) null else Result(Kind.NEWS, a.title, a.source, time = a.time, score = s,
-                open = Open.intent(ctx, Intent(Intent.ACTION_VIEW, Uri.parse(a.link))), key = "news:${a.link}")
+                open = Open.article(ctx, a.link), key = "news:${a.link}")
         }
         val posts = FeedsClient.items(ctx).mapNotNull { a ->
             val s = headline(query, a.title)
             if (s == Match.NONE) null else Result(Kind.FEED, a.title, a.source, time = a.time, score = s,
-                open = Open.intent(ctx, Intent(Intent.ACTION_VIEW, Uri.parse(a.link))), key = "news:${a.link}")
+                open = Open.article(ctx, a.link), key = "news:${a.link}")
         }
         return (news + posts).sortedWith(compareByDescending<Result> { it.score }.thenByDescending { it.time }).take(limit)
     }
