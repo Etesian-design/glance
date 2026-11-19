@@ -75,7 +75,9 @@ class Open : Activity() {
             com.bompotis.etesian.glance.news.NewsStore.find(this, link)?.let {
                 com.bompotis.etesian.glance.news.NewsStore.opened(this, it)
             }
-            startActivity(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            val view = if (com.bompotis.etesian.glance.Prefs.reader(this))
+                com.bompotis.etesian.glance.ReaderActivity.intent(this, link) else Intent(Intent.ACTION_VIEW, android.net.Uri.parse(link))
+            startActivity(view.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             return
         }
         i.getStringExtra(EXTRA_TARGET)?.let { uri ->

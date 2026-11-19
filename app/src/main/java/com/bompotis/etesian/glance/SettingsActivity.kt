@@ -81,6 +81,12 @@ class SettingsActivity : AppCompatActivity() {
             val news = PreferenceCategory(ctx).apply { title = getString(R.string.news) }
             screen.addPreference(news)
             news.addPreference(SwitchPreferenceCompat(ctx).apply {
+                key = Prefs.READER
+                title = getString(R.string.reader)
+                summary = getString(R.string.reader_summary)
+                setDefaultValue(true)
+            })
+            news.addPreference(SwitchPreferenceCompat(ctx).apply {
                 key = Prefs.GOOGLE_NEWS
                 title = getString(R.string.google_news)
                 summary = getString(R.string.google_news_summary)
