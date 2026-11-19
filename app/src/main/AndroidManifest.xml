@@ -57,6 +57,12 @@
             android:label="@string/settings"
             android:theme="@style/Theme.Glance.Settings" />
 
+        <activity
+            android:name=".ReaderActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|uiMode|keyboardHidden"
+            android:taskAffinity="com.bompotis.etesian.glance.reader" />
+
         <!-- Opens results and stories: for Glance itself and the launcher only (it starts intents as Glance). -->
         <activity
             android:name=".search.Open"
