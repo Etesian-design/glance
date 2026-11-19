@@ -24,18 +24,22 @@ object Rss {
         val items = ArrayList<Item>()
         var channel = ""
         var inItem = false
-        var title = ""; var link = ""; var date = ""; var source = ""; var desc = ""; var image = ""
+        var title = ""; var link = ""; var date = ""; var source = ""; var desc = ""; var image = ""; var width = -1
         while (p.next() != XmlPullParser.END_DOCUMENT) {
             if (p.eventType == XmlPullParser.START_TAG && inItem && p.namespace.orEmpty().contains("search.yahoo.com/mrss")) {
-                // media:content / media:thumbnail: the picture (Media RSS).
-                if ((p.name == "content" || p.name == "thumbnail") && image.isEmpty() &&
-                    p.getAttributeValue(null, "medium").let { it == null || it == "image" })
-                    image = p.getAttributeValue(null, "url").orEmpty()
+                // media:content / media:thumbnail: the picture (Media RSS); the largest of the sizes listed.
+                val url = p.getAttributeValue(null, "url").orEmpty()
+                val w = p.getAttributeValue(null, "width")?.toIntOrNull() ?: 0
+                if ((p.name == "content" || p.name == "thumbnail") && url.isNotEmpty() && w > width &&
+                    p.getAttributeValue(null, "medium").let { it == null || it == "image" } &&
+                    p.getAttributeValue(null, "type").let { it == null || it.startsWith("image/") }) {
+                    image = url; width = w
+                }
             } else if (p.eventType == XmlPullParser.START_TAG) {
                 when (p.name) {
                     "item", "entry" -> {
                         inItem = true
-                        title = ""; link = ""; date = ""; source = ""; desc = ""; image = ""
+                        title = ""; link = ""; date = ""; source = ""; desc = ""; image = ""; width = -1
                     }
                     "title" -> if (inItem) title = text(p) else if (channel.isEmpty()) channel = text(p)
                     "link" -> if (inItem) {
@@ -52,11 +56,22 @@ object Rss {
             } else if (p.eventType == XmlPullParser.END_TAG && (p.name == "item" || p.name == "entry") && inItem) {
                 inItem = false
                 if (title.isNotBlank() && link.isNotBlank())
-                    items += Item(clean(title), link.trim(), time(date), source.trim().ifEmpty { channel.trim() }, desc, image)
+                    items += Item(clean(title), link.trim(), time(date), source.trim().ifEmpty { channel.trim() }, desc,
+                        bigger(image.ifEmpty { imgIn(desc) }))
             }
         }
         return items
     }
+
+    /** The first picture in an HTML summary (feeds that put it there, like The Verge). */
+    fun imgIn(html: String): String =
+        Regex("<img[^>]+src=[\"']([^\"']+)").find(html)?.groupValues?.get(1)?.replace("&amp;", "&")
+            ?.takeIf { it.startsWith("https://") }.orEmpty()
+
+    /** BBC lists 240 px thumbnails; its image server makes any width, so ask for one that fills the screen. */
+    fun bigger(url: String): String = url
+        .replace(Regex("(ichef\\.bbci\\.co\\.uk/(?:ace/)?(?:standard|ws)/)\\d+/"), "$1800/")
+        .replace(Regex("(ichef\\.bbci\\.co\\.uk/images/ic/)\\d+x\\d+/"), "$1800x450/")
 
     private fun text(p: XmlPullParser): String {
         val sb = StringBuilder()

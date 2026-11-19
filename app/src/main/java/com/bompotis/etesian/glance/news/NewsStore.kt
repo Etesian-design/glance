@@ -20,6 +20,8 @@ object NewsStore {
     private const val TAG = "GlanceNews"
     /** A refresh within this long of the last one is skipped, unless forced (pull to refresh). */
     private const val MIN_INTERVAL_MS = 10 * 60_000L
+    /** Publisher pages read for a picture per refresh, at most. */
+    private const val MAX_PAGES = 40
 
     /** Swappable: Cloud Companion's agents can take over choosing the stories later. */
     @Volatile var selection: Selection = Ranker
@@ -102,6 +104,10 @@ object NewsStore {
                 jobs += fetchers.submit<List<Article>> { GoogleNews.articles(get(GoogleNews.topicUrl(t, edition)), t, top = false) }
             }
         }
+        // Publishers' feeds, for their pictures only (Google's carry none).
+        val donorJobs = if (!Prefs.googleNews(ctx)) emptyList() else Pictures.feeds(Prefs.topics(ctx)).map { u ->
+            fetchers.submit<List<Article>> { get(u).map { Article(it.title, it.source, it.link, it.time, image = it.image) } }
+        }
         val out = ArrayList<Article>()
         jobs.forEach { f -> runCatching { out += f.get(30, TimeUnit.SECONDS) }.onFailure { Log.w(TAG, "fetch", it) } }
         // Top stories carry no topic: take it from the same story in a topic feed.
@@ -111,8 +117,19 @@ object NewsStore {
             a.copy(topic = same.firstOrNull { it.topic.isNotEmpty() }?.topic ?: topicOf[a.link].orEmpty(),
                 top = same.any { it.top }, coverage = same.flatMap { it.coverage }.distinct())
         }
-        if (Prefs.feeds(ctx)) return merged + FeedsClient.items(ctx).filter { a -> merged.none { it.link == a.link } }
-        return merged
+        val all = if (!Prefs.feeds(ctx)) merged else merged + FeedsClient.items(ctx).filter { a -> merged.none { it.link == a.link } }
+        val donors = donorJobs.flatMap { f -> runCatching { f.get(30, TimeUnit.SECONDS) }.getOrDefault(emptyList()) }
+        // A picture found before stays (no fetching the page again).
+        val known = cached(ctx).filter { it.image.isNotEmpty() }.associate { it.link to it.image }
+        val withKnown = all.map { a -> if (a.image.isEmpty() && known[a.link] != null) a.copy(image = known.getValue(a.link)) else a }
+        val matches = Pictures.match(withKnown, donors)
+        val lent = withKnown.map { a -> matches[a.link]?.image?.takeIf { it.isNotEmpty() }?.let { a.copy(image = it) } ?: a }
+        // Still none: the picture on the publisher's own page (a Feeds post's link, or the matched publisher article's).
+        val pages = lent.filter { it.image.isEmpty() }.mapNotNull { a ->
+            when { a.origin == Origin.FEEDS -> a.link; else -> matches[a.link]?.link }?.let { a.link to it }
+        }.take(MAX_PAGES).associate { (link, page) -> link to fetchers.submit<String> { Pictures.ofPage(page) } }
+        return lent.map { a -> pages[a.link]?.let { f -> runCatching { f.get(20, TimeUnit.SECONDS) }.getOrDefault("") }
+            ?.takeIf { it.isNotEmpty() }?.let { a.copy(image = it) } ?: a }
     }
 
     private fun get(url: String): List<Rss.Item> {
