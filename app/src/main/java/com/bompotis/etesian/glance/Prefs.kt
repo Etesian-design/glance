@@ -23,6 +23,7 @@ object Prefs {
     fun of(ctx: Context): SharedPreferences = ctx.getSharedPreferences("glance", Context.MODE_PRIVATE)
 
     fun source(ctx: Context, kind: Kind) = of(ctx).getBoolean(sourceKey(kind), true)
+    fun setSource(ctx: Context, kind: Kind, on: Boolean) = of(ctx).edit().putBoolean(sourceKey(kind), on).apply()
     fun googleNews(ctx: Context) = of(ctx).getBoolean(GOOGLE_NEWS, true)
     fun feeds(ctx: Context) = of(ctx).getBoolean(FEEDS, true)
     fun topics(ctx: Context): Set<String> =

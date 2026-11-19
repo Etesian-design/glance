@@ -39,12 +39,14 @@ class SettingsActivity : AppCompatActivity() {
             screen.addPreference(search)
             Setup.Need.entries.forEach { n ->
                 search.addPreference(SwitchPreferenceCompat(ctx).apply {
+                    // On only when it is wanted and Android allows it (stock Android may not have granted it yet; the
+                    // ROM grants it up front). The wish itself is saved apart from what the switch shows.
                     key = Prefs.sourceKey(n.kind)
                     title = getString(n.label)
-                    setDefaultValue(true)
+                    isPersistent = false
                     setOnPreferenceChangeListener { _, on ->
-                        if (on == true && !Setup.allowed(requireContext(), n)) Setup.request(requireActivity(), n)
-                        true
+                        Prefs.setSource(requireContext(), n.kind, on == true)
+                        if (on == true && !Setup.allowed(requireContext(), n)) { Setup.request(requireActivity(), n); false } else true
                     }
                 })
             }
@@ -139,8 +141,10 @@ class SettingsActivity : AppCompatActivity() {
             val ctx = requireContext()
             // Allowed or not, as it is now (the user may come back from a system page).
             Setup.Need.entries.forEach { n ->
-                findPreference<SwitchPreferenceCompat>(Prefs.sourceKey(n.kind))?.summary =
-                    if (Setup.allowed(ctx, n)) null else getString(R.string.not_allowed)
+                val p = findPreference<SwitchPreferenceCompat>(Prefs.sourceKey(n.kind)) ?: return@forEach
+                val allowed = Setup.allowed(ctx, n)
+                p.isChecked = Prefs.source(ctx, n.kind) && allowed
+                p.summary = if (allowed) null else getString(R.string.not_allowed)
             }
             findPreference<Preference>("shortcuts_state")?.summary =
                 getString(if (ShortcutsSource.available(ctx)) R.string.shortcuts_on else R.string.shortcuts_off)

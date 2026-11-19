@@ -22,7 +22,7 @@
     <string name="need_sms">Text messages</string>
     <string name="need_notifications">Notifications and chat messages</string>
     <string name="need_files">Files</string>
-    <string name="not_allowed">Not allowed yet: switch on to allow</string>
+    <string name="not_allowed">Not allowed yet: switch on to allow it</string>
     <string name="source_settings">Settings pages</string>
     <string name="source_news">News and feeds</string>
     <string name="source_shortcuts">App shortcuts</string>
