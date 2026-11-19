@@ -12,8 +12,10 @@ android {
         applicationId = "com.bompotis.etesian.glance"
         minSdk = 31
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        // Releases pass the version (ci/release.sh -PglanceVersion=1.2.3): versionCode 10203, so every release upgrades.
+        val v = (project.findProperty("glanceVersion") as String?) ?: "0.1.0"
+        versionName = v
+        versionCode = v.split(".").map { it.toInt() }.let { (a, b, c) -> a * 10000 + b * 100 + c }
     }
 
     // Etesian builds sign with the ROM's platform key, like the launcher and Feeds: their signature permissions
