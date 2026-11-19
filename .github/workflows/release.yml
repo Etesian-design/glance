@@ -1,10 +1,9 @@
 # SPDX-License-Identifier: AGPL-3.0-only
-# Releases, as in android_vendor_etesian: go-semantic-release reads the Conventional Commits since the last tag (feat = minor,
-# fix = patch; below 1.0 a breaking change is a minor bump; docs, ci, chore... release nothing; the first is v0.1.0). The
-# APK, for stock Android (the ROM builds in its own copy), is built and signed with Glance's own key on the DeskMini, where
-# the key stays (ci/release.sh, ci/new-key.sh); only a finished, signed
-# build makes the tag and the GitHub release, with the APK and its SHA-256.
-# Only main and manual runs reach the self-hosted runner, never a pull request.
+# Releases of the APK for stock Android (the ROM builds in its own platform-signed copy). go-semantic-release reads the
+# Conventional Commits since the last tag (feat = minor, fix = patch; below 1.0 a breaking change is a minor bump; docs,
+# ci, chore... release nothing; the first is v0.1.0). Built on GitHub's runners and signed with Glance's own key, kept
+# as repository secrets: GLANCE_KEYSTORE (the .p12, base64) and GLANCE_KEYSTORE_PASS. Only a finished, signed build
+# makes the tag and the release, with the APK and its SHA-256.
 name: Release
 on:
   push:
@@ -20,14 +19,17 @@ concurrency:
 jobs:
   release:
     if: github.repository == 'Etesian-design/glance'
-    runs-on: [self-hosted, deskmini]
-    timeout-minutes: 60
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262   # v4
         with:
           fetch-depth: 0
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
       - name: Install semantic-release
         run: |
           curl -fsSL -o "$RUNNER_TEMP/semantic-release" https://github.com/go-semantic-release/semantic-release/releases/download/v2.31.0/semantic-release_v2.31.0_linux_amd64
@@ -45,8 +47,19 @@ jobs:
       - name: Build and sign
         if: steps.next.outputs.version != ''
         env:
-          ETESIAN_KEYS_PASS: ${{ secrets.ETESIAN_KEYS_PASS }}
-        run: printf %s "$ETESIAN_KEYS_PASS" | ci/release.sh "${{ steps.next.outputs.version }}"
+          KS: ${{ secrets.GLANCE_KEYSTORE }}
+          KS_PASS: ${{ secrets.GLANCE_KEYSTORE_PASS }}
+          V: ${{ steps.next.outputs.version }}
+        run: |
+          ./gradlew --no-daemon -q -PglanceVersion="$V" :app:testDebugUnitTest :app:assembleRelease
+          printf %s "$KS" | base64 -d > "$RUNNER_TEMP/glance.p12"
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          mkdir -p release; A="release/EtesianGlance-$V.apk"
+          "$BT/apksigner" sign --v4-signing-enabled false --ks "$RUNNER_TEMP/glance.p12" --ks-pass env:KS_PASS \
+            --out "$A" app/build/outputs/apk/release/*.apk
+          rm -f "$RUNNER_TEMP/glance.p12"
+          "$BT/apksigner" verify "$A"
+          (cd release && sha256sum "$(basename "$A")" > "$(basename "$A").sha256")
       - name: Release
         id: semrel
         if: steps.next.outputs.version != ''
