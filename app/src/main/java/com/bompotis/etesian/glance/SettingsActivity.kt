@@ -23,6 +23,8 @@ class SettingsActivity : AppCompatActivity() {
         title = getString(R.string.settings)
         if (savedInstanceState == null)
             supportFragmentManager.beginTransaction().replace(android.R.id.content, Screen()).commit()
+        // Back on the bottom bar, as everywhere in Etesian (no Up arrow on top).
+        Ui.toolbar(this, null, back = true, actions = emptyList()) {}
     }
 
     class Screen : PreferenceFragmentCompat() {

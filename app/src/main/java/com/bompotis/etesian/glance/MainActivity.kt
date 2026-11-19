@@ -18,7 +18,6 @@ import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.PopupMenu
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -74,10 +73,19 @@ class MainActivity : Activity() {
             setOnRefreshListener { NewsStore.refresh(this@MainActivity, force = true) }
         }
         root.addView(refresh, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        // The bottom bar, as everywhere in Etesian: Refresh and Settings (no Back on the main screen).
+        val ownBar = Ui.toolbar(this, root, back = false, actions = listOf(
+            Ui.Action("refresh", R.drawable.tb_refresh, getString(R.string.refresh)),
+            Ui.Action("settings", R.drawable.tb_settings, getString(R.string.settings)))) { id ->
+            when (id) {
+                "refresh" -> { refresh.isRefreshing = true; NewsStore.refresh(this, force = true) }
+                "settings" -> startActivity(Intent(this, SettingsActivity::class.java))
+            }
+        }
         root.setOnApplyWindowInsetsListener { v, insets ->
             val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.ime())
-            v.setPadding(bars.left, bars.top, bars.right, 0)
-            list.setPadding(0, 0, 0, bars.bottom)
+            if (ownBar == null) { v.setPadding(bars.left, bars.top, bars.right, 0); list.setPadding(0, 0, 0, bars.bottom) }
+            else { v.setPadding(bars.left, bars.top, bars.right, bars.bottom); list.setPadding(0, 0, 0, 0) }
             insets
         }
         setContentView(root)
@@ -129,7 +137,8 @@ class MainActivity : Activity() {
         box.addView(field, LinearLayout.LayoutParams(0, (48 * d).toInt(), 1f))
         action = ImageButton(this).apply {
             background = null
-            setOnClickListener { if (query.isNotEmpty()) field.setText("") else startActivity(Intent(this@MainActivity, SettingsActivity::class.java)) }
+            // Clears the search (Settings and Refresh are on the bottom bar).
+            setOnClickListener { field.setText("") }
             imageTintList = android.content.res.ColorStateList.valueOf(Ui.color(this@MainActivity, Ui.SECONDARY))
         }
         box.addView(action, LinearLayout.LayoutParams((44 * d).toInt(), (44 * d).toInt()))
@@ -139,8 +148,9 @@ class MainActivity : Activity() {
     }
 
     private fun updateAction() {
-        action.setImageResource(if (query.isEmpty()) R.drawable.ic_settings else R.drawable.ic_clear)
-        action.contentDescription = getString(if (query.isEmpty()) R.string.settings else R.string.clear)
+        action.setImageResource(R.drawable.ic_clear)
+        action.contentDescription = getString(R.string.clear)
+        action.visibility = if (query.isEmpty()) View.INVISIBLE else View.VISIBLE
     }
 
     private fun onQuery(q: String) {
@@ -165,19 +175,16 @@ class MainActivity : Activity() {
         adapter.showNews(stories, NewsStore.refreshing, NewsStore.lastRefresh(this), Setup.missing(this))
     }
 
-    private fun onStoryMenu(v: View, s: Story) {
-        PopupMenu(this, v).apply {
-            menu.add(0, 1, 0, R.string.fewer_like_this)
-            menu.add(0, 2, 0, R.string.share)
-            setOnMenuItemClickListener {
-                when (it.itemId) {
-                    1 -> NewsStore.fewerLike(this@MainActivity, s.lead)
-                    2 -> startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain")
-                        .putExtra(Intent.EXTRA_TEXT, "${s.lead.title}\n${s.lead.link}"), null))
-                }
-                true
+    /** A story's long press: the N9 menu, as in every Etesian app. */
+    private fun onStoryMenu(@Suppress("UNUSED_PARAMETER") v: View, s: Story) {
+        com.bompotis.etesian.toolbar.EtesianMenu.show(this, R.menu.story, null) { mi ->
+            when (mi.itemId) {
+                R.id.fewer -> NewsStore.fewerLike(this, s.lead)
+                R.id.share -> startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain")
+                    .putExtra(Intent.EXTRA_TEXT, "${s.lead.title}\n${s.lead.link}"), null))
+                R.id.browser -> open(Intent(Intent.ACTION_VIEW, android.net.Uri.parse(s.lead.link)))
             }
-            show()
+            true
         }
     }
 

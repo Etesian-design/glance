@@ -31,12 +31,15 @@
     <string name="web_suggestions">Web suggestions</string>
     <string name="reader">Read stories in Glance</string>
     <string name="reader_summary">A clean page with just the article, like a browser\'s reader view. The original is always a tap away.</string>
+    <string name="back">Back</string>
+    <string name="refresh">Refresh</string>
+    <string name="menu">Menu</string>
     <string name="open_in_browser">Open in browser</string>
+    <string name="read_on">Read the original on %1$s</string>
     <string name="larger_text">Larger text</string>
     <string name="smaller_text">Smaller text</string>
     <string name="reader_loading">Getting the article…</string>
     <string name="reader_unavailable">This page can\'t be shown as an article. Here it is as it is.</string>
-    <string name="back">Back</string>
     <string name="web_suggestions_summary">Suggestions from DuckDuckGo as you type (what you type is sent to it)</string>
     <string name="search_engine">Search engine</string>
     <string name="clear_notification_history">Clear notification history</string>

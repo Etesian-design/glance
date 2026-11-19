@@ -28,6 +28,8 @@ class ReaderTest {
         assertTrue("hero picture", html.contains("class=\"hero\" src=\"https://e.com/hero.jpg\""))
         assertTrue(html.contains("By Ann · 18 November 2026"))
         assertTrue(html.contains("font: 19px/1.6"))
+        val linked = Reader.page(a, 19, colors, "BBC", "https://bbc.co.uk/a", "Read the original on bbc.co.uk")
+        assertTrue("the original at the end", linked.contains("<a href=\"https://bbc.co.uk/a\">Read the original on bbc.co.uk ↗</a>"))
     }
 
     @Test fun noSecondHeroWhenTheArticleHasIt() {

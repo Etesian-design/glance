@@ -38,4 +38,34 @@ object Ui {
             else -> DateUtils.getRelativeTimeSpanString(time, now, DateUtils.DAY_IN_MILLIS).toString()
         }
     }
+
+    /** A bottom bar action. */
+    class Action(val id: String, val icon: Int, val label: String)
+
+    /**
+     * The page's actions on the Etesian (N9) bottom bar, Back at its far left, as every Etesian app does (no buttons
+     * on top). Off the ROM, or with the bar off, the page draws the same bar itself: returned, else null.
+     */
+    fun toolbar(activity: android.app.Activity, root: android.widget.LinearLayout?, back: Boolean, actions: List<Action>,
+                onTap: (String) -> Unit): android.view.View? {
+        if (com.bompotis.etesian.toolbar.EtesianToolbar.isAvailable(activity)) {
+            com.bompotis.etesian.toolbar.EtesianToolbar.of(activity).setBack(back)
+                .setItems(actions.map { com.bompotis.etesian.toolbar.EtesianToolbar.Item.action(it.id, it.icon, it.label) }) { onTap(it) }
+            return null
+        }
+        if (root == null) return null
+        val d = activity.resources.displayMetrics.density
+        val bar = android.widget.LinearLayout(activity).apply { setBackgroundColor(color(activity, SURFACE)) }
+        val all = (if (back) listOf(Action("back", R.drawable.ic_back_bar, activity.getString(R.string.back))) else emptyList()) + actions
+        for (a in all) bar.addView(android.widget.ImageView(activity).apply {
+            setImageResource(a.icon)
+            imageTintList = android.content.res.ColorStateList.valueOf(color(activity, PRIMARY))
+            scaleType = android.widget.ImageView.ScaleType.CENTER_INSIDE
+            contentDescription = a.label
+            setPadding(0, (14 * d).toInt(), 0, (14 * d).toInt())
+            setOnClickListener { if (a.id == "back") @Suppress("DEPRECATION") activity.onBackPressed() else onTap(a.id) }
+        }, android.widget.LinearLayout.LayoutParams(0, -2, 1f))
+        root.addView(bar, android.widget.LinearLayout.LayoutParams(-1, -2))
+        return bar
+    }
 }

@@ -19,9 +19,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
-import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.PopupMenu
 import android.widget.ProgressBar
 import android.widget.TextView
 import org.json.JSONObject
@@ -79,21 +77,13 @@ class ReaderActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Ui.color(this@ReaderActivity, Ui.BACKGROUND))
         }
-        val bar = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL; setPadding(px(4), px(4), px(4), px(4)) }
-        fun button(icon: Int, label: Int, click: (View) -> Unit) = ImageButton(this).apply {
-            setImageResource(icon); background = null; contentDescription = getString(label)
-            imageTintList = android.content.res.ColorStateList.valueOf(Ui.color(this@ReaderActivity, Ui.PRIMARY))
-            setOnClickListener(click)
-        }
-        bar.addView(button(R.drawable.ic_back, R.string.back) { finish() }, LinearLayout.LayoutParams(px(48), px(48)))
+        // Just where the article is from, on top; the actions are on the bottom bar.
         site = TextView(this).apply {
-            textSize = 15f; setTextColor(Ui.color(this@ReaderActivity, Ui.SECONDARY)); maxLines = 1
+            textSize = 14f; setTextColor(Ui.color(this@ReaderActivity, Ui.SECONDARY)); maxLines = 1
             ellipsize = TextUtils.TruncateAt.END; text = host(link)
+            setPadding(px(20), px(10), px(20), px(10))
         }
-        bar.addView(site, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = px(4) })
-        bar.addView(button(R.drawable.ic_open, R.string.open_in_browser) { openInBrowser() }, LinearLayout.LayoutParams(px(48), px(48)))
-        bar.addView(button(R.drawable.ic_more, R.string.settings) { menu(it) }, LinearLayout.LayoutParams(px(48), px(48)))
-        root.addView(bar)
+        root.addView(site)
         progress = ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal).apply { isIndeterminate = true }
         root.addView(progress, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px(4)))
 
@@ -159,8 +149,16 @@ class ReaderActivity : Activity() {
         }
         stack.addView(status, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.TOP))
 
+        // The bottom bar, as everywhere in Etesian: Back, then the original in the browser, Share, the menu.
+        Ui.toolbar(this, root, back = true, actions = listOf(
+            Ui.Action("browser", R.drawable.tb_browser, getString(R.string.open_in_browser)),
+            Ui.Action("share", R.drawable.tb_share, getString(R.string.share)),
+            Ui.Action("menu", R.drawable.tb_menu, getString(R.string.menu)))) { id ->
+            when (id) { "browser" -> openInBrowser(); "share" -> share(); "menu" -> menu() }
+        }
         root.setOnApplyWindowInsetsListener { v, insets ->
             val b = insets.getInsets(WindowInsets.Type.systemBars())
+            // The system's bar is drawn over the navigation inset: keep the page clear of it.
             v.setPadding(b.left, b.top, b.right, b.bottom)
             insets
         }
@@ -194,7 +192,8 @@ class ReaderActivity : Activity() {
 
     private fun render() {
         val a = article ?: return
-        reader.loadDataWithBaseURL(landed, Reader.page(a, Prefs.readerSize(this), colors(), site = a.site.ifEmpty { host(landed) }),
+        reader.loadDataWithBaseURL(landed, Reader.page(a, Prefs.readerSize(this), colors(), site = a.site.ifEmpty { host(landed) },
+            original = original(), originalLabel = getString(R.string.read_on, host(original()))),
             "text/html", "utf-8", null)
         reader.visibility = View.VISIBLE
         loader.visibility = View.INVISIBLE
@@ -228,24 +227,20 @@ class ReaderActivity : Activity() {
 
     private fun css(c: Int) = String.format("#%06X", c and 0xFFFFFF)
 
-    private fun menu(v: View) {
-        PopupMenu(this, v).apply {
-            menu.add(0, 1, 0, R.string.larger_text)
-            menu.add(0, 2, 0, R.string.smaller_text)
-            menu.add(0, 3, 0, R.string.share)
-            menu.add(0, 4, 0, R.string.open_in_browser)
-            setOnMenuItemClickListener {
-                when (it.itemId) {
-                    1 -> { Prefs.setReaderSize(this@ReaderActivity, Prefs.readerSize(this@ReaderActivity) + 2); render() }
-                    2 -> { Prefs.setReaderSize(this@ReaderActivity, Prefs.readerSize(this@ReaderActivity) - 2); render() }
-                    3 -> startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain")
-                        .putExtra(Intent.EXTRA_TEXT, listOfNotNull(article?.title, original()).joinToString("\n")), null))
-                    4 -> openInBrowser()
-                }
-                true
+    private fun menu() {
+        com.bompotis.etesian.toolbar.EtesianMenu.show(this, R.menu.reader, null) { mi ->
+            val size = Prefs.readerSize(this)
+            when (mi.itemId) {
+                R.id.larger -> { Prefs.setReaderSize(this, size + 2); render() }
+                R.id.smaller -> { Prefs.setReaderSize(this, size - 2); render() }
             }
-            show()
+            true
         }
+    }
+
+    private fun share() {
+        startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain")
+            .putExtra(Intent.EXTRA_TEXT, listOfNotNull(article?.title, original()).joinToString("\n")), null))
     }
 
     /** The publisher's link once known (not Google's), else the one we were given. */
@@ -307,7 +302,7 @@ object Reader {
     }.recoverCatching { java.time.LocalDate.parse(iso.take(10)).format(java.time.format.DateTimeFormatter.ofPattern("d MMMM yyyy")) }
         .getOrDefault("")
 
-    fun page(a: ReaderActivity.Article, size: Int, c: Colors, site: String): String {
+    fun page(a: ReaderActivity.Article, size: Int, c: Colors, site: String, original: String = "", originalLabel: String = ""): String {
         // The page's picture on top, unless the article already starts with it.
         val name = a.image.substringAfterLast('/').substringBefore('?').take(40)
         val hero = if (a.image.startsWith("http") && (name.isEmpty() || !a.content.contains(name)))
@@ -338,11 +333,13 @@ table { display: block; overflow-x: auto; border-collapse: collapse; }
 td, th { border: 1px solid ${c.divider}; padding: 4px 8px; }
 hr { border: 0; border-top: 1px solid ${c.divider}; margin: 2em 0; }
 iframe, form, button, input { display: none; }
+.original { margin: 2.5em 0 0; padding-top: 1.2em; border-top: 1px solid ${c.divider}; font: 600 15px/1.4 sans-serif; }
 </style></head><body><main>
 $hero<div class="site">${esc(site)}</div>
 <h1>${esc(a.title)}</h1>
 ${if (meta.isNotEmpty()) "<div class=\"meta\">${esc(meta)}</div>" else ""}
 ${a.content}
+${if (original.startsWith("http")) "<p class=\"original\"><a href=\"${esc(original)}\">${esc(originalLabel)} ↗</a></p>" else ""}
 </main></body></html>"""
     }
 }
