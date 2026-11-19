@@ -268,7 +268,7 @@ object WebSource : Source {
         val out = mutableListOf(Result(Kind.WEB, "Search the web for “$q”", "", score = 1,
             open = Open.intent(ctx, open), key = "web:$q"))
         if (Prefs.webSuggestions(ctx)) Suggest.fetch(q).take(limit - 1).forEach { s ->
-            out += Result(Kind.WEB, s, "", score = 1, key = "web:$s",
+            out += Result(Kind.WEB, s, "", score = 1, key = "suggest:$s",
                 open = Open.intent(ctx, Intent(Intent.ACTION_VIEW, Uri.parse(Prefs.searchEngine(ctx).replace("%s", Uri.encode(s))))))
         }
         return out

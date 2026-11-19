@@ -20,7 +20,6 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.bompotis.etesian.glance.news.NewsStore
 import com.bompotis.etesian.glance.news.Section
 import com.bompotis.etesian.glance.news.Story
@@ -41,18 +40,17 @@ class MainActivity : Activity() {
 
     private lateinit var field: EditText
     private lateinit var action: ImageButton
-    private lateinit var refresh: SwipeRefreshLayout
     private val adapter by lazy { Rows(this, ::onStoryMenu) }
     private val main = Handler(Looper.getMainLooper())
     private val searcher = Executors.newSingleThreadExecutor()
     @Volatile private var searchSeq = 0
     private var query = ""
-    private val newsChanged: () -> Unit = { main.post { if (query.isEmpty()) showNews() } }
+    private val newsChanged: () -> Unit = { main.post { bar(NewsStore.refreshing); if (query.isEmpty()) showNews() } }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         NewsJob.schedule(this)
-        val root = LinearLayout(this).apply {
+        root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Ui.color(this@MainActivity, Ui.BACKGROUND))
         }
@@ -68,20 +66,10 @@ class MainActivity : Activity() {
                 }
             })
         }
-        refresh = SwipeRefreshLayout(this).apply {
-            addView(list)
-            setOnRefreshListener { NewsStore.refresh(this@MainActivity, force = true) }
-        }
-        root.addView(refresh, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-        // The bottom bar, as everywhere in Etesian: Refresh and Settings (no Back on the main screen).
-        val ownBar = Ui.toolbar(this, root, back = false, actions = listOf(
-            Ui.Action("refresh", R.drawable.tb_refresh, getString(R.string.refresh)),
-            Ui.Action("settings", R.drawable.tb_settings, getString(R.string.settings)))) { id ->
-            when (id) {
-                "refresh" -> { refresh.isRefreshing = true; NewsStore.refresh(this, force = true) }
-                "settings" -> startActivity(Intent(this, SettingsActivity::class.java))
-            }
-        }
+        // No pull-down circle (an Android gesture, not the N9's): Refresh is on the toolbar, and it is greyed while the
+        // news loads.
+        root.addView(list, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        ownBar = bar(refreshing = false)
         root.setOnApplyWindowInsetsListener { v, insets ->
             val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.ime())
             if (ownBar == null) { v.setPadding(bars.left, bars.top, bars.right, 0); list.setPadding(0, 0, 0, bars.bottom) }
@@ -156,7 +144,6 @@ class MainActivity : Activity() {
     private fun onQuery(q: String) {
         query = q.trim()
         updateAction()
-        refresh.isEnabled = query.isEmpty()
         val seq = ++searchSeq
         if (query.isEmpty()) { showNews(); return }
         main.postDelayed({
@@ -169,9 +156,28 @@ class MainActivity : Activity() {
         }, 120)
     }
 
+    private lateinit var root: LinearLayout
+    private var ownBar: View? = null
+    private var barBusy: Boolean? = null
+
+    /** The bottom bar, as everywhere in Etesian: Refresh (greyed while the news loads) and Settings; no Back here. */
+    private fun bar(refreshing: Boolean): View? {
+        if (barBusy == refreshing) return ownBar
+        barBusy = refreshing
+        ownBar?.let { (it.parent as? ViewGroup)?.removeView(it) }
+        return Ui.toolbar(this, root, back = false, actions = listOf(
+            Ui.Action("refresh", R.drawable.tb_refresh, getString(R.string.refresh), enabled = !refreshing),
+            Ui.Action("settings", R.drawable.tb_settings, getString(R.string.settings)))) { id ->
+            when (id) {
+                "refresh" -> { NewsStore.refresh(this, force = true); showNews() }
+                "settings" -> startActivity(Intent(this, SettingsActivity::class.java))
+            }
+        }.also { ownBar = it }
+    }
+
     private fun showNews() {
         val stories = NewsStore.stories(this)
-        refresh.isRefreshing = NewsStore.refreshing && stories.isNotEmpty()
+        bar(NewsStore.refreshing)
         adapter.showNews(stories, NewsStore.refreshing, NewsStore.lastRefresh(this), Setup.missing(this))
     }
 
