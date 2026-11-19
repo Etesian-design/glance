@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # Releases, as in android_vendor_etesian: go-semantic-release reads the Conventional Commits since the last tag (feat = minor,
 # fix = patch; below 1.0 a breaking change is a minor bump; docs, ci, chore... release nothing; the first is v0.1.0). The
-# APK is built and signed on the DeskMini first, where the release keys stay (ci/release.sh); only a finished, signed
+# APK, for stock Android (the ROM builds in its own copy), is built and signed with Glance's own key on the DeskMini, where
+# the key stays (ci/release.sh, ci/new-key.sh); only a finished, signed
 # build makes the tag and the GitHub release, with the APK and its SHA-256.
 # Only main and manual runs reach the self-hosted runner, never a pull request.
 name: Release
