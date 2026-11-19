@@ -109,19 +109,17 @@ class Rows(
     private fun bindStory(row: LinearLayout, r: Row.StoryRow) {
         row.removeAllViews()
         row.orientation = LinearLayout.VERTICAL
-        row.setPadding(px(16), px(10), px(16), px(12))
+        // As in Google News: the picture edge to edge, the headline and where it's from under it.
+        row.setPadding(0, 0, 0, px(14))
         row.background = ripple()
         val s = r.story
-        if (r.lead && s.lead.image.isNotEmpty()) {
-            val img = ImageView(activity).apply {
-                scaleType = ImageView.ScaleType.CENTER_CROP
-                clipToOutline = true
-                background = Ui.rounded(activity, Ui.DIVIDER, 12f)
-            }
-            row.addView(img, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px(180)).apply { bottomMargin = px(10) })
-            Images.load(s.lead.image, img)
-        }
-        row.addView(text(if (r.lead) 20f else 16.5f, Ui.PRIMARY, bold = true).apply {
+        val img = Picture(activity)
+        row.addView(img, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            .apply { topMargin = px(6); bottomMargin = px(12) })
+        val tile = Tile(s.lead.source.ifEmpty { s.lead.title }, px(1).toFloat())
+        if (s.image.isNotEmpty()) Images.load(s.image, img, tile) else { img.tag = null; img.setImageDrawable(tile) }
+        row.addView(text(if (r.lead) 21f else 18f, Ui.PRIMARY, bold = true).apply {
+            setPadding(px(16), 0, px(16), 0)
             text = s.lead.title
             maxLines = 4
             ellipsize = TextUtils.TruncateAt.END
@@ -134,10 +132,10 @@ class Rows(
             if (outlets > 1) activity.resources.getQuantityString(R.plurals.outlets, outlets, outlets) else null,
             topicLabel(s.lead.topic),
         ).joinToString(" · ")
-        row.addView(text(13f, Ui.SECONDARY).apply { text = meta; setPadding(0, px(4), 0, 0) })
+        row.addView(text(13f, Ui.SECONDARY).apply { text = meta; setPadding(px(16), px(6), px(16), 0) })
         if (s.lead.summary.isNotEmpty() && s.lead.origin == com.bompotis.etesian.glance.news.Origin.FEEDS) {
             row.addView(text(14f, Ui.SECONDARY).apply {
-                text = s.lead.summary; maxLines = 2; ellipsize = TextUtils.TruncateAt.END; setPadding(0, px(4), 0, 0)
+                text = s.lead.summary; maxLines = 2; ellipsize = TextUtils.TruncateAt.END; setPadding(px(16), px(4), px(16), 0)
             })
         }
         row.contentDescription = "story:${s.lead.title}"
@@ -237,16 +235,17 @@ class Letter(ctx: android.content.Context, name: String, private val color: Int)
 
 /** Story pictures, fetched once, kept in memory (a few MB), scaled down to the screen. */
 object Images {
-    private val cache = object : LruCache<String, Bitmap>(16 * 1024 * 1024) {
+    private val cache = object : LruCache<String, Bitmap>(32 * 1024 * 1024) {
         override fun sizeOf(key: String, value: Bitmap) = value.byteCount
     }
-    private val pool = Executors.newFixedThreadPool(2)
+    private val pool = Executors.newFixedThreadPool(4)
     private val main = Handler(Looper.getMainLooper())
 
-    fun load(url: String, into: ImageView) {
+    /** Loads [url] into [into], showing [meanwhile] until it comes (and if it never does). */
+    fun load(url: String, into: ImageView, meanwhile: Drawable? = null) {
         into.tag = url
         cache.get(url)?.let { into.setImageBitmap(it); return }
-        into.setImageDrawable(null)
+        into.setImageDrawable(meanwhile)
         pool.execute {
             val bmp = runCatching {
                 val c = URL(url).openConnection() as HttpURLConnection
@@ -257,11 +256,44 @@ object Images {
                     BitmapFactory.decodeByteArray(bytes, 0, bytes.size, o)
                     var sample = 1
                     while (o.outWidth / (sample * 2) >= 1080) sample *= 2
-                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply { inSampleSize = sample })
+                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, BitmapFactory.Options().apply {
+                        inSampleSize = sample; inPreferredConfig = Bitmap.Config.RGB_565 })
                 } finally { c.disconnect() }
             }.getOrNull() ?: return@execute
             cache.put(url, bmp)
             main.post { if (into.tag == url) into.setImageBitmap(bmp) }
         }
     }
+}
+
+/** A story's picture: the width of the screen, 16:9, cropped to fill. */
+class Picture(ctx: android.content.Context) : ImageView(ctx) {
+    init { scaleType = ScaleType.CENTER_CROP }
+    override fun onMeasure(w: Int, h: Int) {
+        val width = MeasureSpec.getSize(w)
+        setMeasuredDimension(width, width * 9 / 16)
+    }
+}
+
+/** No picture to show: a colour of the outlet's own (the same each time) with its name, so every story has one. */
+class Tile(private val name: String, private val dp: Float) : Drawable() {
+    private val hue = ((name.hashCode() and 0x7fffffff) % 360).toFloat()
+    private val bg = android.graphics.Paint()
+    private val ink = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xE6FFFFFF.toInt(); typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        textAlign = android.graphics.Paint.Align.CENTER
+    }
+    override fun draw(c: android.graphics.Canvas) {
+        val b = bounds
+        bg.shader = android.graphics.LinearGradient(0f, b.top.toFloat(), b.width().toFloat(), b.bottom.toFloat(),
+            android.graphics.Color.HSVToColor(floatArrayOf(hue, 0.55f, 0.55f)),
+            android.graphics.Color.HSVToColor(floatArrayOf((hue + 40) % 360, 0.6f, 0.3f)), android.graphics.Shader.TileMode.CLAMP)
+        c.drawRect(b, bg)
+        ink.textSize = 26 * dp
+        val label = TextUtils.ellipsize(name, android.text.TextPaint(ink), b.width() - 48 * dp, TextUtils.TruncateAt.END).toString()
+        c.drawText(label, b.exactCenterX(), b.exactCenterY() - (ink.descent() + ink.ascent()) / 2, ink)
+    }
+    override fun setAlpha(a: Int) { ink.alpha = a }
+    override fun setColorFilter(f: android.graphics.ColorFilter?) {}
+    @Deprecated("Deprecated in Java") override fun getOpacity() = android.graphics.PixelFormat.OPAQUE
 }

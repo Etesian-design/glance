@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <atom:link href="https://news-api.cf.sky.com/feeds/rss/home.xml" rel="self" type="application/rss+xml"/>
+    <title>The Latest News from the UK and Around the World | Sky News</title>
+    <link>https://news.sky.com/home</link>
+    <image>
+      <title>The Latest News from the UK and Around the World | Sky News</title>
+      <url>https://e3.365dm.com/skynews/logo.png</url>
+      <link>https://news.sky.com/home</link>
+    </image>
+    <description>Sky news delivers breaking news, headlines and top stories from business, politics, entertainment and more in the UK and worldwide.</description>
+    <language>en-GB</language>
+    <copyright>Copyright 2026, Sky UK. All Rights Reserved.</copyright>
+    <lastBuildDate>Wed, 18 Nov 2026 21:57:00 +0000</lastBuildDate>
+    <category>Sky News</category>
+    <ttl>1</ttl>
+    <item>
+      <title>Anthropic share price revealed ahead of stock market debut </title>
+      <link>https://news.sky.com/story/ai-giant-anthropic-raises-more-money-than-any-other-company-when-going-public-13613708</link>
+      <description>Demand for shares in artificial intelligence company Anthropic have surpassed expectations - signalling confidence in AI investment after a bruising fortnight for the industry. </description>
+      <pubDate>Wed, 18 Nov 2026 19:30:00 +0000</pubDate>
+      <guid>https://news.sky.com/story/ai-giant-anthropic-raises-more-money-than-any-other-company-when-going-public-13613708</guid>
+      <enclosure url="https://e3.365dm.com/26/11/1920x1080/skynews-anthropic-ai_7409999.jpg?20261119013910" length="0" type="image/jpeg"/>
+      <media:description type="html">Reuters file pic</media:description>
+      <media:thumbnail url="https://e3.365dm.com/26/11/1920x1080/skynews-anthropic-ai_7409999.jpg?20261119013910" width="1920" height="1080"/>
+      <media:content type="image/jpeg" url="https://e3.365dm.com/26/11/1920x1080/skynews-anthropic-ai_7409999.jpg?20261119013910"/>
+    </item>
+    <item>
+      <title>Muslims projected to outnumber Christians worldwide by 2035</title>
+      <link>https://news.sky.com/story/muslims-projected-to-outnumber-christians-by-2035-with-majority-in-uk-non-religious-by-2070-13613731</link>
+      <description>Islam is expected to surpass Christianity as the world&apos;s largest religion by 2035, according to detailed projections released on Wednesday.</description>
+      <pubDate>Wed, 18 Nov 2026 20:42:00 +0000</pubDate>
+      <guid>https://news.sky.com/story/muslims-projected-to-outnumber-christians-by-2035-with-majority-in-uk-non-religious-by-2070-13613731</guid>
+      <enclosure url="https://e3.365dm.com/26/11/1920x1080/skynews-islam-mecca_7409895.jpg?20261118210730" length="0" type="image/jpeg"/>
+      <media:description type="html">Muslims gather around the Kaaba inside the Grand Mosque in Makkah, Saudi Arabia. Pic: Reuters</media:description>
+      <media:thumbnail url="https://e3.365dm.com/26/11/1920x1080/skynews-islam-mecca_7409895.jpg?20261118210730" width="1920" height="1080"/>
+      <media:content type="image/jpeg" url="https://e3.365dm.com/26/11/1920x1080/skynews-islam-mecca_7409895.jpg?20261118210730"/>
+    </item>
+    <item>
+      <title>Children among hundreds of thousands of London transport users who may have been hit by data breach</title>
+      <link>https://news.sky.com/story/oyster-photocard-customers-account-details-compromised-13613753</link>
+      <description>Oyster photocard customers may have had their account details compromised after &quot;suspicious activity&quot; was detected, Transport for London (TfL) said. </description>
+      <pubDate>Wed, 18 Nov 2026 21:57:00 +0000</pubDate>
+      <guid>https://news.sky.com/story/oyster-photocard-customers-account-details-compromised-13613753</guid>
+      <enclosure url="https://e3.365dm.com/26/11/1920x1080/skynews-tube-london_7409955.jpg?20261118222711" length="0" type="image/jpeg"/>
+      <media:description type="html">File image: iStock</media:description>
+      <media:thumbnail url="https://e3.365dm.com/26/11/1920x1080/skynews-tube-london_7409955.jpg?20261118222711" width="1920" height="1080"/>
+      <media:content type="image/jpeg" url="https://e3.365dm.com/26/11/1920x1080/skynews-tube-london_7409955.jpg?20261118222711"/>
+    </item>
+    <item>
+      <title>Israeli troops launch ground operation in central Gaza</title>
+      <link>https://news.sky.com/story/israeli-troops-launch-ground-operation-in-central-gaza-13613724</link>
+      <description>Dozens of displaced Palestinians have fled their tents and shelters in central ‌Gaza after Israel launched a rare ground operation in an area it had left under a ceasefire last year.</description>
+      <pubDate>Wed, 18 Nov 2026 20:29:00 +0000</pubDate>
+      <guid>https://news.sky.com/story/israeli-troops-launch-ground-operation-in-central-gaza-13613724</guid>
+      <enclosure url="https://e3.365dm.com/26/11/1920x1080/skynews-palestinians-gaza_7409882.jpg?20261118205348" length="0" type="image/jpeg"/>
+      <media:description type="html">Palestinians ride in the back of a vehicle as they evacuate their homes and tents. Pic: Reuters</media:description>
+      <media:thumbnail url="https://e3.365dm.com/26/11/1920x1080/skynews-palestinians-gaza_7409882.jpg?20261118205348" width="1920" height="1080"/>
+      <media:content type="image/jpeg" url="https://e3.365dm.com/26/11/1920x1080/skynews-palestinians-gaza_7409882.jpg?20261118205348"/>
+    </item>
+    <item>
+      <title>Britain&apos;s biggest defence company to cut more than 1,000 jobs</title>
+      <link>https://news.sky.com/story/britains-biggest-defence-company-to-cut-more-than-1000-jobs-13610507</link>
+      <description>British multinational aerospace, arms and information security company BAE Systems is to cut more than 1,000 jobs in its air division.</description>
+      <pubDate>Tue, 10 Nov 2026 09:34:00 +0000</pubDate>
+      <guid>https://news.sky.com/story/britains-biggest-defence-company-to-cut-more-than-1000-jobs-13610507</guid>
+      <enclosure url="https://e3.365dm.com/26/11/1920x1080/skynews-bae-systems-wes-streeting_7409747.jpg?20261118164744" length="0" type="image/jpeg"/>
+      <media:description type="html">BAE Systems boss Charles Woodburn and Defence Secretary Wes Streeting pictured with its unmanned fighter aircraft Brontanax. Pic: Reuters</media:description>
+      <media:thumbnail url="https://e3.365dm.com/26/11/1920x1080/skynews-bae-systems-wes-streeting_7409747.jpg?20261118164744" width="1920" height="1080"/>
+      <media:content type="image/jpeg" url="https://e3.365dm.com/26/11/1920x1080/skynews-bae-systems-wes-streeting_7409747.jpg?20261118164744"/>
+    </item>
+    <item>
+      <title>William and Kate meet India&apos;s PM as they wrap up royal visit</title>
+      <link>https://news.sky.com/story/prince-william-and-kate-meet-indias-pm-narendra-modi-as-they-wrap-up-royal-visit-13613699</link>
+      <description>The Prince and Princess of Wales met the prime minister of India on Wednesday to discuss trade and bilateral ‌ties at the end of their three-day visit to the country. </description>
+      <pubDate>Wed, 18 Nov 2026 18:54:00 +0000</pubDate>
+      <guid>https://news.sky.com/story/prince-william-and-kate-meet-indias-pm-narendra-modi-as-they-wrap-up-royal-visit-13613699</guid>
+      <enclosure url="https://e3.365dm.com/26/11/1920x1080/skynews-modi-william-kate_7409824.jpg?20261118192123" length="0" type="image/jpeg"/>
+      <media:description type="html">Pic: Reuters</media:description>
+      <media:thumbnail url="https://e3.365dm.com/26/11/1920x1080/skynews-modi-william-kate_7409824.jpg?20261118192123" width="1920" height="1080"/>
+      <media:content type="image/jpeg" url="https://e3.365dm.com/26/11/1920x1080/skynews-modi-william-kate_7409824.jpg?20261118192123"/>
+    </item>
+  </channel>
+</rss>

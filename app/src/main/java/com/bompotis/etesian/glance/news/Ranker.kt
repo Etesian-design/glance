@@ -93,6 +93,9 @@ object Ranker : Selection {
     const val MAX_STORIES = 60
     /** Titles sharing this much of their words are the same story. */
     const val SAME_STORY = 0.45
+    const val NO_PICTURE = 0.4
+    /** For you shows only stories with pictures, unless fewer than this have one. */
+    const val MIN_FOR_YOU = 20
     private const val MAX_AGE_H = 72.0
 
     private val stop = setOf(
@@ -141,7 +144,9 @@ object Ranker : Selection {
         // The user subscribed to it in Feeds; Google News put it in Top stories.
         val chosen = (if (group.any { it.origin == Origin.FEEDS }) 1.25 else 1.0) * (if (group.any { it.top }) 1.3 else 1.0)
         val seen = if (group.any { it.link in interests.read }) 0.35 else 1.0
-        return freshness * coverage * interest * chosen * seen
+        // A story with a picture to show reads like Google News; one without drops back (a tile stands in).
+        val pictured = if (group.any { it.image.isNotEmpty() }) 1.0 else NO_PICTURE
+        return freshness * coverage * interest * chosen * seen * pictured
     }
 
     override fun select(articles: List<Article>, interests: Interests, now: Long): List<Story> {
@@ -158,7 +163,12 @@ object Ranker : Selection {
         val topPool = scored.filter { it.first.top }.ifEmpty { scored }
         val top = topPool.sortedByDescending { if (it.first.link in interests.read) it.third * 0.5 else it.third }
             .take(TOP_COUNT)
-        val rest = scored.filter { t -> top.none { it.first.link == t.first.link } }
+        val others = scored.filter { t -> top.none { it.first.link == t.first.link } }
+        // Stories with a picture; those without only to fill For you up to a screenful or two.
+        val hasPicture = { t: Triple<Article, List<Article>, Double> -> t.first.image.isNotEmpty() || t.second.any { it.image.isNotEmpty() } }
+        val pictured = others.filter(hasPicture)
+        val rest = if (pictured.size >= MIN_FOR_YOU) pictured
+            else pictured + others.filterNot(hasPicture).take(MIN_FOR_YOU - pictured.size)
 
         // For you: best first, but no publication or topic takes over: each repeat counts for less.
         val picked = ArrayList<Story>()

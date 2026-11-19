@@ -48,6 +48,8 @@ data class Story(
     val section: Section,
 ) {
     val sources: Set<String> get() = (listOf(lead) + others).map { it.source }.toSet() + lead.coverage
+    /** The lead's picture, else one from another article on the story. */
+    val image: String get() = lead.image.ifEmpty { others.firstOrNull { it.image.isNotEmpty() }?.image.orEmpty() }
 }
 
 enum class Section(val title: String) { TOP("Top stories"), FOR_YOU("For you") }

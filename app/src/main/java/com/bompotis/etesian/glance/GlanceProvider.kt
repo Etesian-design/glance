@@ -37,7 +37,7 @@ class GlanceProvider : ContentProvider() {
         return MatrixCursor(COLUMNS).apply {
             NewsStore.stories(ctx).forEach { s ->
                 val a = s.lead
-                addRow(arrayOf<Any>(s.section.name, a.title, a.source, a.link, a.time, a.topic, a.summary, a.image,
+                addRow(arrayOf<Any>(s.section.name, a.title, a.source, a.link, a.time, a.topic, a.summary, s.image,
                     s.sources.size, Open.article(ctx, a.link).toUri(android.content.Intent.URI_INTENT_SCHEME)))
             }
             setNotificationUri(ctx.contentResolver, NEWS)
