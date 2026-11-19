@@ -1,0 +1,42 @@
+// SPDX-License-Identifier: Apache-2.0
+// Etesian Glance as built into the Etesian ROM: the ROM's manifest (vendor/etesian manifest/etesian.xml) fetches this
+// repo and Soong builds it from source, signed with the platform key like the launcher and Feeds (the launcher reads
+// Glance's news and search through its signature permission, Glance reads Feeds, and the platform's own signature
+// permissions apply: app shortcuts, switching its notification access on). Gradle ignores this file; it builds the
+// APK for stock Android (.github/workflows/release.yml).
+android_app {
+    name: "EtesianGlance",
+    srcs: ["app/src/main/java/**/*.kt", "app/src/main/java/**/*.java"],
+    resource_dirs: ["app/src/main/res"],
+    asset_dirs: ["app/src/main/assets"],
+    manifest: ":EtesianGlance-manifest",
+    sdk_version: "current",
+    min_sdk_version: "31",
+    certificate: "platform",
+    system_ext_specific: true,
+    required: ["default-permissions_com.bompotis.etesian.glance.xml"],
+    static_libs: [
+        "androidx.core_core-ktx",
+        "androidx.appcompat_appcompat",
+        "androidx.recyclerview_recyclerview",
+        "androidx.preference_preference",
+    ],
+    optimize: {
+        enabled: false,
+    },
+    // Above any release for stock Android, so a ROM update always replaces an installed copy.
+    aaptflags: [
+        "--version-code",
+        "999999",
+        "--version-name",
+        "rom",
+    ],
+}
+
+// Gradle sets the package through its namespace; aapt2 needs it in the manifest.
+genrule {
+    name: "EtesianGlance-manifest",
+    srcs: ["app/src/main/AndroidManifest.xml"],
+    out: ["AndroidManifest.xml"],
+    cmd: "sed 's|<manifest |<manifest package=\"com.bompotis.etesian.glance\" |' $(in) > $(out)",
+}
