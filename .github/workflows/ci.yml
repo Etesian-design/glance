@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Every push and pull request: Conventional Commits (commitlint.config.mjs, also a local git hook after npm install),
-# the unit tests (matching, parsing, ranking) and a release build. Runs on GitHub's own runners.
+# the unit tests (matching, parsing, ranking) and a release build. Runs on GitHub's own runners, whose Android SDK
+# is already installed (Gradle fetches the platform it needs).
 name: CI
 on:
   pull_request:
@@ -38,7 +39,6 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - uses: android-actions/setup-android@v3
       - name: Unit tests and release build
         run: ./gradlew --no-daemon :app:testDebugUnitTest :app:assembleRelease
       - uses: actions/upload-artifact@v4
