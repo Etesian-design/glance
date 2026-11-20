@@ -150,8 +150,12 @@ class MainActivity : Activity() {
             if (seq != searchSeq) return@postDelayed
             searcher.execute {
                 if (seq != searchSeq) return@execute
-                val sections = Searcher.search(this, query)
-                main.post { if (seq == searchSeq) adapter.showResults(sections) }
+                // Each source's results as they come: the phone's own at once, the web when it answers.
+                val last = Searcher.search(this, query, stale = { seq != searchSeq }) { sections ->
+                    main.post { if (seq == searchSeq) adapter.showResults(sections) }
+                }
+                // The final answer even when no source found anything (the last query's results must not stay).
+                main.post { if (seq == searchSeq) adapter.showResults(last) }
             }
         }, 120)
     }

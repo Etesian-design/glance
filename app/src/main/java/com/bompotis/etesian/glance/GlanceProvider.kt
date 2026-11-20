@@ -53,7 +53,12 @@ class GlanceProvider : ContentProvider() {
         try {
             when (method) {
                 "search" -> {
-                    val sections = Searcher.search(ctx, arg.orEmpty(), perSection = extras?.getInt("perSection", Searcher.PER_SECTION)
+                    // "kinds": only those sources (Kind names), so a caller can ask each source on its own, all at once,
+                    // and show each as it answers (the launcher does); the reply says which it searched.
+                    val kinds = extras?.getStringArray("kinds")?.toSet()
+                    val sources = if (kinds == null) Searcher.all else Searcher.all.filter { it.kind.name in kinds }
+                    if (kinds != null) out.putStringArray("kinds", kinds.toTypedArray())
+                    val sections = Searcher.search(ctx, arg.orEmpty(), sources, perSection = extras?.getInt("perSection", Searcher.PER_SECTION)
                         ?: Searcher.PER_SECTION)
                     out.putParcelableArrayList("sections", ArrayList(sections.map { s ->
                         Bundle().apply {
