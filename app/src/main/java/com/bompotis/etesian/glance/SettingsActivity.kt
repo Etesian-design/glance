@@ -115,6 +115,12 @@ class SettingsActivity : AppCompatActivity() {
                 setDefaultValue("")
                 summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
             })
+            news.addPreference(Preference(ctx).apply {
+                key = "feeds_page"
+                title = getString(R.string.feeds_page)
+                summary = getString(R.string.feeds_page_summary)
+                setOnPreferenceClickListener { startActivity(android.content.Intent(requireContext(), FeedsSettingsActivity::class.java)); true }
+            })
             news.addPreference(SwitchPreferenceCompat(ctx).apply {
                 key = Prefs.FEEDS
                 title = getString(R.string.feeds)

@@ -58,6 +58,12 @@
             android:theme="@style/Theme.Glance.Settings" />
 
         <activity
+            android:name=".FeedsSettingsActivity"
+            android:exported="false"
+            android:label="@string/feeds_page"
+            android:theme="@style/Theme.Glance.Settings" />
+
+        <activity
             android:name=".ReaderActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|uiMode|keyboardHidden"
