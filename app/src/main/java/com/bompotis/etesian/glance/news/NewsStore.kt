@@ -67,7 +67,8 @@ object NewsStore {
 
     /** The stories, ranked: from memory, else ranked from the saved articles. */
     fun stories(ctx: Context): List<Story> = stories ?: synchronized(this) {
-        stories ?: selection.select(cached(ctx), interests(ctx), System.currentTimeMillis()).also { stories = it }
+        stories ?: selection.select(cached(ctx), interests(ctx).also { it.wanted = Prefs.keywords(ctx) },
+            System.currentTimeMillis()).also { stories = it }
     }
 
     fun refresh(ctx: Context, force: Boolean = false) {
@@ -85,6 +86,8 @@ object NewsStore {
                         file(app).writeText(JSONObject().put("time", System.currentTimeMillis())
                             .put("articles", JSONArray(fresh.map { it.toJson() })).toString())
                     }
+                    // Then, on Wi-Fi, the articles to keep for offline reading (the job waits for it).
+                    Offline.prefetch(app, fresh) { changed(app) }
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "refresh", e)
@@ -104,6 +107,15 @@ object NewsStore {
                 jobs += fetchers.submit<List<Article>> { GoogleNews.articles(get(GoogleNews.topicUrl(t, edition)), t, top = false) }
             }
         }
+        // The user's keywords: Google News searches, in the same edition.
+        Prefs.keywords(ctx).forEach { k ->
+            jobs += fetchers.submit<List<Article>> { GoogleNews.articles(get(GoogleNews.searchUrl(k, edition)), "", top = false).take(20) }
+        }
+        if (Prefs.yahoo(ctx)) jobs += fetchers.submit<List<Article>> { Yahoo.articles(get(Yahoo.URL)) }
+        // Glance's own subscriptions.
+        Subscriptions.all(ctx).forEach { sub ->
+            jobs += fetchers.submit<List<Article>> { Subscriptions.articles(sub, feed(sub.url)).take(40) }
+        }
         // Publishers' feeds, for their pictures only (Google's carry none).
         val donorJobs = if (!Prefs.googleNews(ctx)) emptyList() else Pictures.feeds(Prefs.topics(ctx)).map { u ->
             fetchers.submit<List<Article>> { get(u).map { Article(it.title, it.source, it.link, it.time, image = it.image) } }
@@ -117,7 +129,8 @@ object NewsStore {
             a.copy(topic = same.firstOrNull { it.topic.isNotEmpty() }?.topic ?: topicOf[a.link].orEmpty(),
                 top = same.any { it.top }, coverage = same.flatMap { it.coverage }.distinct())
         }
-        val all = if (!Prefs.feeds(ctx)) merged else merged + FeedsClient.items(ctx).filter { a -> merged.none { it.link == a.link } }
+        val links = merged.map { it.link }.toHashSet()
+        val all = if (!Prefs.feeds(ctx)) merged else merged + FeedsClient.items(ctx).filter { it.link !in links }
         val donors = donorJobs.flatMap { f -> runCatching { f.get(30, TimeUnit.SECONDS) }.getOrDefault(emptyList()) }
         // A picture found before stays (no fetching the page again).
         val known = cached(ctx).filter { it.image.isNotEmpty() }.associate { it.link to it.image }
@@ -132,11 +145,13 @@ object NewsStore {
             ?.takeIf { it.isNotEmpty() }?.let { a.copy(image = it) } ?: a }
     }
 
-    private fun get(url: String): List<Rss.Item> {
+    private fun get(url: String): List<Rss.Item> = feed(url).items
+
+    private fun feed(url: String): Rss.Feed {
         val c = URL(url).openConnection() as HttpURLConnection
         c.connectTimeout = 15_000; c.readTimeout = 20_000
-        c.setRequestProperty("User-Agent", "EtesianGlance")
-        return try { c.inputStream.reader().use { Rss.parse(it) } } finally { c.disconnect() }
+        c.setRequestProperty("User-Agent", if (url.contains("news.google.com")) "EtesianGlance" else Net.MOBILE_UA)
+        return try { c.inputStream.reader().use { Rss.parseFeed(it) } } finally { c.disconnect() }
     }
 
     fun opened(ctx: Context, a: Article) {

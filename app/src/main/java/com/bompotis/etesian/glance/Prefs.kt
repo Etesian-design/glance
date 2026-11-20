@@ -15,6 +15,9 @@ object Prefs {
     const val SEARCH_ENGINE = "search_engine"
     const val READER = "reader"
     const val READER_SIZE = "reader_size"
+    const val YAHOO = "yahoo"
+    const val YAHOO_OFFLINE = "yahoo_offline"
+    const val KEYWORDS = "keywords"
     fun sourceKey(kind: Kind) = "source_${kind.name.lowercase()}"
 
     val DEFAULT_TOPICS = setOf("WORLD", "NATION", "BUSINESS", "TECHNOLOGY", "SCIENCE")
@@ -36,5 +39,17 @@ object Prefs {
     fun reader(ctx: Context) = of(ctx).getBoolean(READER, true)
     /** The reader's text size, in CSS px. */
     fun readerSize(ctx: Context) = of(ctx).getInt(READER_SIZE, 19)
+    /** Yahoo News mixed in: on by default where the phone is in English (its feed is US English only). */
+    fun yahoo(ctx: Context) = of(ctx).getBoolean(YAHOO, java.util.Locale.getDefault().language == "en")
+    fun setYahoo(ctx: Context, on: Boolean) = of(ctx).edit().putBoolean(YAHOO, on).apply()
+    /** Yahoo's stories kept for reading offline (Wi-Fi only); off unless asked. */
+    fun yahooOffline(ctx: Context) = of(ctx).getBoolean(YAHOO_OFFLINE, false)
+    fun setYahooOffline(ctx: Context, on: Boolean) = of(ctx).edit().putBoolean(YAHOO_OFFLINE, on).apply()
+    /** The user's keywords: fetched as Google News searches, and their stories put first in For you. */
+    fun keywords(ctx: Context): List<String> = runCatching {
+        org.json.JSONArray(of(ctx).getString(KEYWORDS, "[]")).let { a -> (0 until a.length()).map { a.getString(it) } }
+    }.getOrDefault(emptyList())
+    fun setKeywords(ctx: Context, k: List<String>) =
+        of(ctx).edit().putString(KEYWORDS, org.json.JSONArray(k.map { it.trim() }.filter { it.isNotEmpty() }.distinct()).toString()).apply()
     fun setReaderSize(ctx: Context, px: Int) = of(ctx).edit().putInt(READER_SIZE, px.coerceIn(14, 30)).apply()
 }

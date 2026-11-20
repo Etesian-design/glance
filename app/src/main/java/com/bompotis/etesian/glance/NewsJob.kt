@@ -28,12 +28,12 @@ class NewsJob : JobService() {
     override fun onStartJob(params: JobParameters): Boolean {
         val done = object : () -> Unit {
             override fun invoke() {
-                if (!NewsStore.refreshing) { NewsStore.unlisten(this); jobFinished(params, false) }
+                if (!NewsStore.refreshing && !com.bompotis.etesian.glance.news.Offline.running) { NewsStore.unlisten(this); jobFinished(params, false) }
             }
         }
         NewsStore.listen(done)
         NewsStore.refresh(this)
-        if (!NewsStore.refreshing) { NewsStore.unlisten(done); return false }
+        if (!NewsStore.refreshing && !com.bompotis.etesian.glance.news.Offline.running) { NewsStore.unlisten(done); return false }
         return true
     }
 
