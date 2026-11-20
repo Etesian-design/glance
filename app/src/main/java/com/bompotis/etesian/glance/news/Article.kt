@@ -3,8 +3,8 @@ package com.bompotis.etesian.glance.news
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Where an article came from: Google News (editors' picks by topic) or one of the user's Feeds subscriptions. */
-enum class Origin { GOOGLE, FEEDS }
+/** Where an article came from: Google News (editors' picks by topic), a subscription (Glance's own or the Feeds app's), Yahoo News. */
+enum class Origin { GOOGLE, FEEDS, YAHOO }
 
 /** One article, from any source. */
 data class Article(
@@ -24,19 +24,21 @@ data class Article(
     val coverage: List<String> = emptyList(),
     /** A Feeds post's own id (Feeds marks posts read by it). */
     val ref: String = "",
+    /** The subscription's feed URL, for a post from one of Glance's own subscriptions. */
+    val feed: String = "",
 ) {
     val id: String get() = link
 
     fun toJson(): JSONObject = JSONObject().put("title", title).put("source", source).put("link", link).put("time", time)
         .put("topic", topic).put("summary", summary).put("image", image).put("origin", origin.name).put("top", top)
-        .put("coverage", JSONArray(coverage)).put("ref", ref)
+        .put("coverage", JSONArray(coverage)).put("ref", ref).put("feed", feed)
 
     companion object {
         fun fromJson(o: JSONObject) = Article(o.getString("title"), o.optString("source"), o.getString("link"),
             o.optLong("time"), o.optString("topic"), o.optString("summary"), o.optString("image"),
             runCatching { Origin.valueOf(o.optString("origin")) }.getOrDefault(Origin.GOOGLE), o.optBoolean("top"),
             o.optJSONArray("coverage")?.let { a -> (0 until a.length()).map { a.getString(it) } }.orEmpty(),
-            o.optString("ref"))
+            o.optString("ref"), o.optString("feed"))
     }
 }
 

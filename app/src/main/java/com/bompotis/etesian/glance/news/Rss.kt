@@ -18,7 +18,12 @@ object Rss {
         val image: String,
     )
 
-    fun parse(reader: Reader): List<Item> {
+    /** A feed's own title and its items. */
+    data class Feed(val title: String, val items: List<Item>)
+
+    fun parse(reader: Reader): List<Item> = parseFeed(reader).items
+
+    fun parseFeed(reader: Reader): Feed {
         val p = XmlPullParserFactory.newInstance().apply { isNamespaceAware = true }.newPullParser()
         p.setInput(reader)
         val items = ArrayList<Item>()
@@ -60,7 +65,7 @@ object Rss {
                         bigger(image.ifEmpty { imgIn(desc) }))
             }
         }
-        return items
+        return Feed(clean(channel), items)
     }
 
     /** The first picture in an HTML summary (feeds that put it there, like The Verge). */

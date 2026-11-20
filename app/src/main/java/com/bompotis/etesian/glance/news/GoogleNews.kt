@@ -18,6 +18,10 @@ object GoogleNews {
     fun topUrl(edition: String) = "https://news.google.com/rss?$edition"
     fun topicUrl(topic: String, edition: String) = "https://news.google.com/rss/headlines/section/topic/$topic?$edition"
 
+    /** A search feed: the latest coverage of a keyword, in the same edition. */
+    fun searchUrl(query: String, edition: String) =
+        "https://news.google.com/rss/search?q=${java.net.URLEncoder.encode(query.trim(), "UTF-8")}&$edition"
+
     /** Google News items as articles: "Headline - Publication" split, the other outlets on the story kept. */
     fun articles(items: List<Rss.Item>, topic: String, top: Boolean): List<Article> = items.map { i ->
         val source = i.source.ifBlank { i.title.substringAfterLast(" - ", "") }

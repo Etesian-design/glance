@@ -164,6 +164,11 @@ class ReaderActivity : Activity() {
         }
         setContentView(root)
         reader.contentDescription = "reader:loading"
+        // Kept for offline reading: shown at once, no network needed.
+        com.bompotis.etesian.glance.news.Offline.load(this, link)?.let { (where, a) ->
+            landed = where; site.text = host(where); article = a; done = true
+            render(); reader.contentDescription = "reader:offline:${a.length}"; return
+        }
         loader.loadUrl(link)
         main.postDelayed(timeout, TIMEOUT_MS)
     }

@@ -19,6 +19,9 @@ class Interests(
     val read: MutableSet<String> = HashSet(),
     var updated: Long = 0,
 ) {
+    /** The keywords picked in Settings (not learnt, not saved here): their stories come first. */
+    var wanted: List<String> = emptyList()
+
     fun opened(a: Article, now: Long = System.currentTimeMillis()) {
         decay(now)
         if (a.topic.isNotEmpty()) bump(topics, a.topic, 0.15)
@@ -97,6 +100,21 @@ object Ranker : Selection {
     /** For you shows only stories with pictures, unless fewer than this have one. */
     const val MIN_FOR_YOU = 20
     private const val MAX_AGE_H = 72.0
+    /** A story on one of the user's keywords counts this much more. */
+    const val KEYWORD_BOOST = 2.5
+
+    /**
+     * Whether an article is about a keyword: each of its words starts a word of the headline or summary, matched
+     * like search (no case, no accents: "Εκλογές" finds "εκλογες"; "election" finds "elections").
+     */
+    fun matchesKeyword(a: Article, keywords: List<String>): Boolean {
+        val split = Regex("[^\\p{L}\\p{N}]+")
+        val words = com.bompotis.etesian.glance.search.Match.normalize(a.title + " " + a.summary).split(split).filter { it.isNotEmpty() }
+        return keywords.any { k ->
+            val kw = com.bompotis.etesian.glance.search.Match.normalize(k).split(split).filter { it.isNotEmpty() }
+            kw.isNotEmpty() && kw.all { w -> words.any { it.startsWith(w) } }
+        }
+    }
 
     private val stop = setOf(
         "the", "and", "for", "with", "that", "this", "from", "into", "after", "over", "about", "than", "what", "when",
@@ -143,10 +161,12 @@ object Ranker : Selection {
         val interest = exp(topic + source + keywords).coerceIn(0.3, 3.5)
         // The user subscribed to it in Feeds; Google News put it in Top stories.
         val chosen = (if (group.any { it.origin == Origin.FEEDS }) 1.25 else 1.0) * (if (group.any { it.top }) 1.3 else 1.0)
+        // A keyword the user picked, in the headline or summary of any article on the story.
+        val keyword = if (interests.wanted.isNotEmpty() && group.any { matchesKeyword(it, interests.wanted) }) KEYWORD_BOOST else 1.0
         val seen = if (group.any { it.link in interests.read }) 0.35 else 1.0
         // A story with a picture to show reads like Google News; one without drops back (a tile stands in).
         val pictured = if (group.any { it.image.isNotEmpty() }) 1.0 else NO_PICTURE
-        return freshness * coverage * interest * chosen * seen * pictured
+        return freshness * coverage * interest * chosen * keyword * seen * pictured
     }
 
     override fun select(articles: List<Article>, interests: Interests, now: Long): List<Story> {
