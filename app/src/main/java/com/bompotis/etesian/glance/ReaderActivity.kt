@@ -37,6 +37,8 @@ import org.json.JSONTokener
 class ReaderActivity : Activity() {
 
     companion object {
+        /** What the reader shows ("article:<length>", "page", "consent"): a screen dump replaces a WebView's label with the page's own. */
+        const val LOG = "GlanceReader"
         private const val EXTRA_LINK = "link"
         /** Give up waiting for the page after this long: show what there is. */
         private const val TIMEOUT_MS = 25_000L
@@ -205,6 +207,7 @@ class ReaderActivity : Activity() {
         status.visibility = View.GONE
         progress.visibility = View.GONE
         reader.contentDescription = "reader:article:${a.length}"
+        android.util.Log.i(LOG, "article:${a.length}")
     }
 
     private fun askConsent() {
@@ -213,6 +216,7 @@ class ReaderActivity : Activity() {
         progress.visibility = View.GONE
         status.visibility = View.GONE
         reader.contentDescription = "reader:consent"
+        android.util.Log.i(LOG, "consent")
     }
 
     /** Not an article (or too slow): the page itself, with a word that this is it as it is. */
@@ -223,6 +227,7 @@ class ReaderActivity : Activity() {
         progress.visibility = View.GONE
         status.visibility = View.GONE
         reader.contentDescription = "reader:page"
+        android.util.Log.i(LOG, "page")
         android.widget.Toast.makeText(this, R.string.reader_unavailable, android.widget.Toast.LENGTH_LONG).show()
     }
 
