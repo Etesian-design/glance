@@ -29,6 +29,17 @@ class SettingsActivity : AppCompatActivity() {
 
     class Screen : PreferenceFragmentCompat() {
 
+        // The list ends above the bottom bar (2026-11-22: the last settings were hidden behind it).
+        override fun onViewCreated(view: android.view.View, savedInstanceState: Bundle?) {
+            super.onViewCreated(view, savedInstanceState)
+            listView.clipToPadding = false
+            view.setOnApplyWindowInsetsListener { _, insets ->
+                val bars = insets.getInsets(android.view.WindowInsets.Type.systemBars())
+                listView.setPadding(bars.left, 0, bars.right, bars.bottom)
+                insets
+            }
+        }
+
         override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
             preferenceManager.sharedPreferencesName = "glance"
             val ctx = preferenceManager.context
