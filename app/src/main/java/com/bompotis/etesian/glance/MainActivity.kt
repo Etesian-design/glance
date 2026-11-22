@@ -45,7 +45,7 @@ class MainActivity : Activity() {
     private val searcher = Executors.newSingleThreadExecutor()
     @Volatile private var searchSeq = 0
     private var query = ""
-    private val newsChanged: () -> Unit = { main.post { bar(NewsStore.refreshing); if (query.isEmpty()) showNews() } }
+    private val newsChanged: () -> Unit = { main.post { busy(NewsStore.refreshing); if (query.isEmpty()) showNews() } }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,14 +66,15 @@ class MainActivity : Activity() {
                 }
             })
         }
-        // No pull-down circle (an Android gesture, not the N9's): Refresh is on the toolbar, and it is greyed while the
-        // news loads.
-        root.addView(list, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-        ownBar = bar(refreshing = false)
+        // Pull down to refresh (2026-11-22, N9 style: a line of text, no Android circle), as on the home screen's page.
+        val pull = PullRefresh(this) { android.util.Log.i("Glance", "refresh: pulled"); refresh() }.apply { setContent(list) }
+        root.addView(pull, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        // This first page has no bottom bar (2026-11-22): Refresh and Settings sit by the search bar, as on the home
+        // screen's Glance page. The reader and Settings keep the bar.
+        hideSystemBar()
         root.setOnApplyWindowInsetsListener { v, insets ->
             val bars = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.ime())
-            if (ownBar == null) { v.setPadding(bars.left, bars.top, bars.right, 0); list.setPadding(0, 0, 0, bars.bottom) }
-            else { v.setPadding(bars.left, bars.top, bars.right, bars.bottom); list.setPadding(0, 0, 0, 0) }
+            v.setPadding(bars.left, bars.top, bars.right, 0); list.setPadding(0, 0, 0, bars.bottom)
             insets
         }
         setContentView(root)
@@ -125,12 +126,18 @@ class MainActivity : Activity() {
         box.addView(field, LinearLayout.LayoutParams(0, (48 * d).toInt(), 1f))
         action = ImageButton(this).apply {
             background = null
-            // Clears the search (Settings and Refresh are on the bottom bar).
+            // Clears the search (Refresh and Settings are beside the field).
             setOnClickListener { field.setText("") }
             imageTintList = android.content.res.ColorStateList.valueOf(Ui.color(this@MainActivity, Ui.SECONDARY))
         }
         box.addView(action, LinearLayout.LayoutParams((44 * d).toInt(), (44 * d).toInt()))
-        bar.addView(box)
+        val row = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
+        row.addView(box, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        refreshButton = topButton(R.drawable.tb_refresh, R.string.refresh) { refresh() }
+        row.addView(refreshButton, LinearLayout.LayoutParams((44 * d).toInt(), (44 * d).toInt()).apply { marginStart = (6 * d).toInt() })
+        row.addView(topButton(R.drawable.tb_settings, R.string.settings) { startActivity(Intent(this, SettingsActivity::class.java)) },
+            LinearLayout.LayoutParams((44 * d).toInt(), (44 * d).toInt()))
+        bar.addView(row)
         updateAction()
         return bar
     }
@@ -161,27 +168,32 @@ class MainActivity : Activity() {
     }
 
     private lateinit var root: LinearLayout
-    private var ownBar: View? = null
-    private var barBusy: Boolean? = null
+    private lateinit var refreshButton: ImageButton
 
-    /** The bottom bar, as everywhere in Etesian: Refresh (greyed while the news loads) and Settings; no Back here. */
-    private fun bar(refreshing: Boolean): View? {
-        if (barBusy == refreshing) return ownBar
-        barBusy = refreshing
-        ownBar?.let { (it.parent as? ViewGroup)?.removeView(it) }
-        return Ui.toolbar(this, root, back = false, actions = listOf(
-            Ui.Action("refresh", R.drawable.tb_refresh, getString(R.string.refresh), enabled = !refreshing),
-            Ui.Action("settings", R.drawable.tb_settings, getString(R.string.settings)))) { id ->
-            when (id) {
-                "refresh" -> { NewsStore.refresh(this, force = true); showNews() }
-                "settings" -> startActivity(Intent(this, SettingsActivity::class.java))
-            }
-        }.also { ownBar = it }
+    /** No system bottom bar on this page (its actions are at the top); a page that draws its own draws none. */
+    private fun hideSystemBar() {
+        if (com.bompotis.etesian.toolbar.EtesianToolbar.isAvailable(this))
+            com.bompotis.etesian.toolbar.EtesianToolbar.of(this).setHidden(true)
+    }
+
+    private fun topButton(icon: Int, label: Int, onTap: () -> Unit) = ImageButton(this).apply {
+        background = null
+        setImageResource(icon)
+        contentDescription = getString(label)
+        imageTintList = android.content.res.ColorStateList.valueOf(Ui.color(this@MainActivity, Ui.PRIMARY))
+        setOnClickListener { onTap() }
+    }
+
+    private fun refresh() { NewsStore.refresh(this, force = true); showNews() }
+
+    /** Refresh is greyed while the news loads. */
+    private fun busy(refreshing: Boolean) {
+        refreshButton.isEnabled = !refreshing; refreshButton.alpha = if (refreshing) 0.4f else 1f
     }
 
     private fun showNews() {
         val stories = NewsStore.stories(this)
-        bar(NewsStore.refreshing)
+        busy(NewsStore.refreshing)
         adapter.showNews(stories, NewsStore.refreshing, NewsStore.lastRefresh(this), Setup.missing(this))
     }
 

@@ -33,6 +33,8 @@
     <string name="reader_summary">A clean page with just the article, like a browser\'s reader view. The original is always a tap away.</string>
     <string name="back">Back</string>
     <string name="refresh">Refresh</string>
+    <string name="pull_refresh">Pull down to refresh</string>
+    <string name="pull_release">Release to refresh</string>
     <string name="menu">Menu</string>
     <string name="open_in_browser">Open in browser</string>
     <string name="read_on">Read the original on %1$s</string>
