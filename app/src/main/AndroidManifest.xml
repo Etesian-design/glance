@@ -53,7 +53,8 @@
 
         <activity
             android:name=".SettingsActivity"
-            android:exported="false"
+            android:exported="true"
+            android:permission="com.bompotis.etesian.glance.permission.READ"
             android:label="@string/settings"
             android:theme="@style/Theme.Glance.Settings" />
 

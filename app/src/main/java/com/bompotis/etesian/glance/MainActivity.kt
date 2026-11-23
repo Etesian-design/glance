@@ -186,9 +186,13 @@ class MainActivity : Activity() {
 
     private fun refresh() { NewsStore.refresh(this, force = true); showNews() }
 
-    /** Refresh is greyed while the news loads. */
+    /** While the news loads, Refresh is off and the N9 loading arc runs round its squircle. */
+    private var ring: LoadingRing? = null
     private fun busy(refreshing: Boolean) {
-        refreshButton.isEnabled = !refreshing; refreshButton.alpha = if (refreshing) 0.4f else 1f
+        refreshButton.isEnabled = !refreshing
+        if (refreshing == (ring != null)) return
+        ring?.stop(); ring = null
+        if (refreshing) refreshButton.post { if (NewsStore.refreshing && ring == null) ring = LoadingRing.start(refreshButton, Ui.color(this, Ui.PRIMARY)) }
     }
 
     private fun showNews() {
